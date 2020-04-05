@@ -13,6 +13,6 @@ class BootstrapServiceProvider extends ServiceProvider
 	 */
 	public function boot()
 	{
-		$this->loadViewsFrom(__DIR__ . '/resources/', 'qortex');
+		$this->loadViewsFrom(__DIR__ . '/../../../../resources/', 'qortex');
 	}
 }
