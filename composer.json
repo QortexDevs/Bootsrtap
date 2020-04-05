@@ -6,7 +6,7 @@
     "authors": [
         {
             "name": "Qortex Dev Team",
-            "email": "welcomw@qortex.ru"
+            "email": "welcome@qortex.ru"
         }
     ],
     "minimum-stability": "dev",
@@ -21,9 +21,6 @@
         "orchestra/testbench": "^3.8"
     },
     "autoload": {
-        "classmap": [
-            "src/controllers"
-        ],
         "psr-0": {
             "Qortex\\Bootstrap\\": "src/"
         }
