@@ -21,13 +21,13 @@
         "orchestra/testbench": "^3.8"
     },
     "autoload": {
-        "psr-0": {
-            "Qortex\\Bootstrap\\": "src/"
+        "psr-4": {
+            "Qortex\\Bootstrap\\": "src/Bootstrap"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Qortex\\Bootstrap\\Tests\\": "tests/"
+            "Qortex\\Bootstrap\\Tests\\": "tests/Bootstrap"
         }
     },
     "extra": {

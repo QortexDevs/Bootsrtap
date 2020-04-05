@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Providers;
+namespace Qortex\Bootstrap\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
