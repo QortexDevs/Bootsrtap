@@ -34,6 +34,7 @@
         "laravel": {
             "providers": [
 				"Qortex\\Bootstrap\\Providers\\BootstrapServiceProvider",
+				"Qortex\\Bootstrap\\Providers\\BladeServiceProvider",
 				"Qortex\\Bootstrap\\Providers\\FormServiceProvider"
             ]
         }
