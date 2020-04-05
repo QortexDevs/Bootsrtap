@@ -38,7 +38,7 @@ class FormServiceProvider extends ServiceProvider
 	public function boot()
 	{
 		$self = $this;
-		Form::component('datetimeFilterControl', 'components.control-panel.filter.datetime', [
+		Form::component('datetimeFilterControl', 'qortex.components.control-panel.filter.datetime', [
 			'name',
 			'key',
 			'value' => null,
@@ -58,7 +58,7 @@ class FormServiceProvider extends ServiceProvider
 			return Form::datetimeFilterControl($name, $key, $value, $required, $attrubutes);
 		});
 
-		Form::component('selectMultipleFilterControl', 'components.control-panel.filter.select-multiple', [
+		Form::component('selectMultipleFilterControl', 'qortex.components.control-panel.filter.select-multiple', [
 			'label',
 			'name',
 			'values' => [],
@@ -79,7 +79,7 @@ class FormServiceProvider extends ServiceProvider
 			return Form::selectMultipleFilterControl($label, $name, $values, $value, $attributes);
 		});
 
-		Form::component('selectFilterControl', 'components.control-panel.filter.select', [
+		Form::component('selectFilterControl', 'qortex.components.control-panel.filter.select', [
 			'label',
 			'name',
 			'values' => [],
@@ -99,7 +99,7 @@ class FormServiceProvider extends ServiceProvider
 			return Form::selectFilterControl($label, $name, $values, $value, $attributes);
 		});
 
-		Form::component('datetimeFormControl', 'components.control-panel.form.datetime', [
+		Form::component('datetimeFormControl', 'qortex.components.control-panel.form.datetime', [
 			'name',
 			'key',
 			'value' => null,
@@ -119,7 +119,7 @@ class FormServiceProvider extends ServiceProvider
 			return Form::datetimeFilterControl($name, $key, $value, $defaultValue, $required, $attrubutes);
 		});
 
-		Form::component('selectMultipleFormControl', 'components.control-panel.form.select-multiple', [
+		Form::component('selectMultipleFormControl', 'qortex.components.control-panel.form.select-multiple', [
 			'name',
 			'label',
 			'values' => [],
@@ -132,7 +132,7 @@ class FormServiceProvider extends ServiceProvider
 			return Form::selectMultipleFormControl($name, $label, $values, $value, $required, $attrubutes);
 		});
 
-		Form::component('selectFormControl', 'components.control-panel.form.select', [
+		Form::component('selectFormControl', 'qortex.components.control-panel.form.select', [
 			'name',
 			'label',
 			'values' => [],
@@ -158,7 +158,7 @@ class FormServiceProvider extends ServiceProvider
 			return Form::selectFormControl($name, $label, $values, $value, $required, $attributes);
 		});
 
-		Form::component('textFormControl', 'components.control-panel.form.text', [
+		Form::component('textFormControl', 'qortex.components.control-panel.form.text', [
 			'name',
 			'label',
 			'value' => null,
@@ -173,7 +173,7 @@ class FormServiceProvider extends ServiceProvider
 			return Form::textFormControl($name, $label, $value, $required, $attributes);
 		});
 
-		Form::component('emailFormControl', 'components.control-panel.form.email', [
+		Form::component('emailFormControl', 'qortex.components.control-panel.form.email', [
 			'name',
 			'label',
 			'value' => null,
@@ -188,7 +188,7 @@ class FormServiceProvider extends ServiceProvider
 			return Form::emailFormControl($name, $label, $value, $required, $attributes);
 		});
 
-		Form::component('phoneFormControl', 'components.control-panel.form.phone', [
+		Form::component('phoneFormControl', 'qortex.components.control-panel.form.phone', [
 			'name',
 			'label',
 			'value' => null,
@@ -204,7 +204,7 @@ class FormServiceProvider extends ServiceProvider
 		});
 
 
-		Form::component('passwordFormControl', 'components.control-panel.form.password', [
+		Form::component('passwordFormControl', 'qortex.components.control-panel.form.password', [
 			'name',
 			'label',
 			'value' => null,
@@ -220,7 +220,7 @@ class FormServiceProvider extends ServiceProvider
 			return Form::passwordFormControl($name, $label, $value, $required, $attributes);
 		});
 
-		Form::component('buttonFormControl', 'components.control-panel.form.button', [
+		Form::component('buttonFormControl', 'qortex.components.control-panel.form.button', [
 			'name',
 			'label',
 			'value' => null,
@@ -242,7 +242,7 @@ class FormServiceProvider extends ServiceProvider
 			return Form::buttonFormControl($name, $label, $value, $attributes);
 		});
 
-		Form::component('textareaFormControl', 'components.control-panel.form.textarea', [
+		Form::component('textareaFormControl', 'qortex.components.control-panel.form.textarea', [
 			'name',
 			'label',
 			'value' => null,
@@ -258,7 +258,7 @@ class FormServiceProvider extends ServiceProvider
 			return Form::textareaFormControl($name, $label, $value, $required, $attributes);
 		});
 
-		Form::component('infoFormControl', 'components.control-panel.form.info', [
+		Form::component('infoFormControl', 'qortex.components.control-panel.form.info', [
 			'label',
 			'value' => null,
 			'attributes' => []
