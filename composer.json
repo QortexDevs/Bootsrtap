@@ -2,7 +2,7 @@
     "name": "qortex/bootstrap",
     "description": "Bootstraps a Qortex web application",
     "type": "library",
-    "license": "gpl",
+    "license": "GPL-3.0-or-later",
     "authors": [
         {
             "name": "Qortex Dev Team",
