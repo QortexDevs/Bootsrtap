@@ -22,12 +22,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Qortex\\Bootstrap\\": "src/Bootstrap"
+            "Qortex\\Bootstrap\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Qortex\\Bootstrap\\Tests\\": "tests/Bootstrap"
+            "Qortex\\Bootstrap\\Tests\\": "tests/"
         }
     },
     "extra": {
