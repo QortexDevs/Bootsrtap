@@ -1,0 +1,44 @@
+{
+    "name": "qortex/bootstrap",
+    "description": "Bootstraps a Qortex web application",
+    "type": "library",
+    "license": "gpl",
+    "authors": [
+        {
+            "name": "Qortex Dev Team",
+            "email": "welcomw@qortex.ru"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": "^7.1.3",
+		"illuminate/support": "5.8.*|^6|^7",
+		"laravelcollective/html": "^5.4.0",
+		"yajra/laravel-datatables-oracle": "^9.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7",
+        "orchestra/testbench": "^3.8"
+    },
+    "autoload": {
+        "classmap": [
+            "src/controllers"
+        ],
+        "psr-0": {
+            "Qortex\\Bootstrap\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Qortex\\Bootstrap\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+				"Qortex\\Bootstrap\\Providers\\FormServiceProvider",
+				"Qortex\\Bootstrap\\Providers\\BootstrpapServiceProvider"
+            ]
+        }
+    }
+}
