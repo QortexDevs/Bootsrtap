@@ -33,8 +33,8 @@
     "extra": {
         "laravel": {
             "providers": [
-				"Qortex\\Bootstrap\\Providers\\FormServiceProvider",
-				"Qortex\\Bootstrap\\Providers\\BootstrapServiceProvider"
+				"Qortex\\Bootstrap\\Providers\\BootstrapServiceProvider",
+				"Qortex\\Bootstrap\\Providers\\FormServiceProvider"
             ]
         }
     }
