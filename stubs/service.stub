@@ -1,0 +1,10 @@
+<?php
+
+namespace {{ namespace }};
+
+use Qortex\Bootstrap\Services\GenericService;
+
+class {{ class }} extends GenericService
+{
+
+}
