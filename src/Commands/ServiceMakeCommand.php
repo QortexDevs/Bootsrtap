@@ -82,8 +82,6 @@ class ServiceMakeCommand extends GeneratorCommand
             $replace = $this->buildModelReplacements($replace);
         }
 
-        $replace["use {$serviceNamespace}\Service;\n"] = '';
-
         return str_replace(
             array_keys($replace), array_values($replace), parent::buildClass($name)
         );
@@ -106,7 +104,8 @@ class ServiceMakeCommand extends GeneratorCommand
         }
 
         return array_merge($replace, [
-            'DummyFullModelClass' => $modelClass,
+			'DummyFullModelClassEscaped' => addcslashes($modelClass, '\\'),
+			'DummyFullModelClass' => $modelClass,
             '{{ namespacedModel }}' => $modelClass,
             '{{namespacedModel}}' => $modelClass,
             'DummyModelClass' => class_basename($modelClass),

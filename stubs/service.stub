@@ -1,10 +1,10 @@
 <?php
 
-namespace {{ namespace }};
+namespace DummyNamespace;
 
 use Qortex\Bootstrap\Services\GenericService;
 
-class {{ class }} extends GenericService
+class DummyClass extends GenericService
 {
-
+    protected $modelClassName = '\\DummyFullModelClassEscaped';
 }

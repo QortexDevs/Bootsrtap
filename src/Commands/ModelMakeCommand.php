@@ -12,7 +12,7 @@ class ModelMakeCommand extends \Illuminate\Foundation\Console\ModelMakeCommand
 	 *
 	 * @var string
 	 */
-	protected $signature = 'qortex:make:model';
+	protected $name = 'qortex:make:model';
 
 	/**
 	 * The console command description.
@@ -94,6 +94,7 @@ class ModelMakeCommand extends \Illuminate\Foundation\Console\ModelMakeCommand
 			['factory', 'f', InputOption::VALUE_NONE, 'Create a new factory for the model'],
 			['force', null, InputOption::VALUE_NONE, 'Create the class even if the model already exists'],
 			['migration', 'm', InputOption::VALUE_NONE, 'Create a new migration file for the model'],
+			['model', 'mdl', InputOption::VALUE_NONE, 'Create a new model file for the model'],
 			['seed', 's', InputOption::VALUE_NONE, 'Create a new seeder file for the model'],
 			['service', 'srv', InputOption::VALUE_NONE, 'Create a new service file for the model'],
 			['pivot', 'p', InputOption::VALUE_NONE, 'Indicates if the generated model should be a custom intermediate table model'],
