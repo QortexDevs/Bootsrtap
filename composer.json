@@ -21,7 +21,10 @@
         "orchestra/testbench": "^3.8"
     },
     "autoload": {
-        "psr-4": {
+		"files": [
+			"src/helpers.php"
+		],
+		"psr-4": {
             "Qortex\\Bootstrap\\": "src/"
         }
     },
@@ -34,7 +37,6 @@
         "laravel": {
             "providers": [
 				"Qortex\\Bootstrap\\Providers\\BootstrapServiceProvider",
-				"Qortex\\Bootstrap\\Providers\\BladeServiceProvider",
 				"Qortex\\Bootstrap\\Providers\\FormServiceProvider"
             ]
         }
