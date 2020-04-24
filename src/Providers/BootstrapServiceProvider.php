@@ -18,7 +18,8 @@ class BootstrapServiceProvider extends ServiceProvider
 		if ($this->app->runningInConsole()) {
 			$this->commands([
 				\Qortex\Bootstrap\Commands\ServiceMakeCommand::class,
-				\Qortex\Bootstrap\Commands\ModelMakeCommand::class
+				\Qortex\Bootstrap\Commands\ModelMakeCommand::class,
+				\Qortex\Bootstrap\Commands\DeployBranchCommand::class,
 			]);
 		}
 	}

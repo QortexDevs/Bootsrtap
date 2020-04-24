@@ -40,7 +40,7 @@ abstract class GenericService
 		return $this->getByFieldValueIn($keyFieldName, $ids);
 	}
 
-	private function setProperties(Model $model, array $properties): void
+	protected function setProperties(Model $model, array $properties): Model
 	{
 		$excludeProperties = array_merge($this->defaultExcludeProperties, $this->excludeProperties);
 		foreach ($properties as $name => $value) {
@@ -48,6 +48,7 @@ abstract class GenericService
 				$model->$name = $value;
 			}
 		}
+		return $model;
 	}
 
 	public function create(array $properties): Model
