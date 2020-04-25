@@ -62,8 +62,8 @@ class DeployBranchCommand extends Command
 
 	private function cloneRepositoryOnStagingServer($repositoryName, $branchName, $userName, $domain)
 	{
-		$stubFile = app_path('/.env.deploy-per-branch.stub');
-		$envFile = app_path('.env');
+		$stubFile = '.env.deploy-per-branch.stub';
+		$envFile = '.env';
 		$commands = [
 			'cd ~/branches/',
 			'rm -fR {{branchName}}.{{domain}}',
