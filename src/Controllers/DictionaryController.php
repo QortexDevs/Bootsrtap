@@ -2,13 +2,11 @@
 
 namespace Qortex\Bootstrap\Contollers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
-use Symfony\Component\Translation\Dumper\DumperInterface;
 
 use App\Http\Controllers\Controller;
 
-abstract class DictionaryContoller extends Controller
+abstract class DictionaryContorller extends Controller
 {
 	protected $alias;
 	protected $user;
