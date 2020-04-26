@@ -1,6 +1,6 @@
 <?php
 
-namespace Qortex\Bootstrap\Contollers;
+namespace Qortex\Bootstrap\Controllers;
 
 use Illuminate\Support\Facades\View;
 
