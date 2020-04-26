@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\View;
 
 use App\Http\Controllers\Controller;
 
-abstract class DictionaryContorller extends Controller
+abstract class DictionaryController extends Controller
 {
 	protected $alias;
 	protected $user;
