@@ -6,29 +6,29 @@ use Illuminate\Console\Command;
 
 class GenericCommand extends Command
 {
-	private function emptyLine()
-	{
-		$this->line('');
-	}
+    private function emptyLine()
+    {
+        $this->line('');
+    }
 
-	private function errorBorder($length)
-	{
-		parent::error(str_repeat(' ', $length));
-	}
+    private function errorBorder($length)
+    {
+        parent::error(str_repeat(' ', $length));
+    }
 
-	private function errorMessage($string)
-	{
-		parent::error('  ' . $string . '  ');
-	}
+    private function errorMessage($string)
+    {
+        parent::error('  ' . $string . '  ');
+    }
 
-	public function error($string, $verbosity = null)
-	{
-		$panelWidth = mb_strlen($string) + 4;
+    public function error($string, $verbosity = null)
+    {
+        $panelWidth = mb_strlen($string) + 4;
 
-		$this->emptyLine();
-		$this->errorBorder($panelWidth);
-		$this->errorMessage($string, $verbosity);
-		$this->errorBorder($panelWidth);
-		$this->emptyLine();
-	}
+        $this->emptyLine();
+        $this->errorBorder($panelWidth);
+        $this->errorMessage($string, $verbosity);
+        $this->errorBorder($panelWidth);
+        $this->emptyLine();
+    }
 }

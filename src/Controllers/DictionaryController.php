@@ -8,144 +8,145 @@ use App\Http\Controllers\Controller;
 
 abstract class DictionaryController extends Controller
 {
-	protected $alias;
-	protected $user;
+    protected $alias;
+    protected $user;
+
+    abstract protected function getModelClass(): string;
+
+    abstract protected function getFormRequestClass(): string;
+
+    protected function getCurrentUser()
+    {
+        if (!$this->user) {
+            $this->user = auth()->user();
+        }
+        return $this->user;
+    }
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        View::share('routeAlias', $this->alias);
+    }
 
 
-	/** @return string */
-	abstract protected function getModelClass(): string;
+    /**
+     * @param $id integer
+     * @return \Illuminate\Database\Eloquent\Model
+     */
+    protected function initModel($id = null): \Illuminate\Database\Eloquent\Model
+    {
+        $className = $this->getModelClass();
+        $model = (!$id) ? new $className() : call_user_func([$className, 'findOrFail'], $id);
+        return $model;
+    }
 
-	/** @return string */
-	abstract protected function getFormRequestClass(): string;
+    /** @return \Illuminate\Foundation\Http\FormRequest */
+    protected function getFormRequest(): \Illuminate\Foundation\Http\FormRequest
+    {
+        return app($this->getFormRequestClass());
+    }
 
-	protected function getCurrentUser()
-	{
-		if (!$this->user) {
-			$this->user = auth()->user();
-		}
-		return $this->user;
-	}
+    /**
+     * @param $model \Illuminate\Database\Eloquent\Model
+     * @param $isNewModel bool
+     * @return mixed
+     */
+    protected function afterSaveModel($model, $isNewModel, $request)
+    {
+        return true;
+    }
 
-	/**
-	 * Create a new controller instance.
-	 *
-	 * @return void
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-		View::share('routeAlias', $this->alias);
-	}
+    protected function currentUserCanListModels($model)
+    {
+        return $this->getCurrentUser()->can('list', new $model);
+    }
 
+    protected function currentUserCanCreateModel($model)
+    {
+        return !$model->exists && $this->getCurrentUser()->can('create', $model);
+    }
 
-	/**
-	 * @param $id integer
-	 * @return \Illuminate\Database\Eloquent\Model
-	 */
-	protected function initModel($id = null): \Illuminate\Database\Eloquent\Model
-	{
-		$className = $this->getModelClass();
-		$model = (!$id) ? new $className() : call_user_func([$className, 'findOrFail'], $id);
-		return $model;
-	}
+    protected function currentUserCanViewModel($model)
+    {
+        return $model->exists && $this->getCurrentUser()->can('view', $model);
+    }
 
-	/** @return \Illuminate\Foundation\Http\FormRequest */
-	protected function getFormRequest(): \Illuminate\Foundation\Http\FormRequest
-	{
-		return app($this->getFormRequestClass());
-	}
+    protected function currentUserCanUpdateModel($model)
+    {
+        return $model->exists && $this->getCurrentUser()->can('update', $model);
+    }
 
-	/**
-	 * @param $model \Illuminate\Database\Eloquent\Model
-	 * @param $isNewModel bool
-	 * @return mixed
-	 */
-	protected function afterSaveModel($model, $isNewModel, $request)
-	{
-		return true;
-	}
+    protected function currentUserCanDeleteModel($model)
+    {
+        return !$model->exists && $this->getCurrentUser()->can('delete', $model);
+    }
 
-	protected function currentUserCanListModels($model)
-	{
-		return $this->getCurrentUser()->can('list', new $model);
-	}
+    public function list()
+    {
+        $modelClassName = $this->getModelClass();
+        if ($this->currentUserCanListModels($modelClassName)) {
+            return view($this->alias . '.list', compact('modelClassName'));
+        }
+        return view('errors.permission-denied');
+    }
 
-	protected function currentUserCanCreateModel($model)
-	{
-		return !$model->exists && $this->getCurrentUser()->can('create', $model);
-	}
+    public function form($id = null)
+    {
+        $model = $this->initModel($id);
+        $showForm = false;
+        if ($model->exists && $this->currentUserCanUpdateModel($model)) {
+            $showForm = true;
+        }
+        if (!$model->exists && $this->currentUserCanCreateModel($model)) {
+            $showForm = true;
+        }
+        if (!$showForm) {
+            return view('errors.permission-denied');
+        }
+        return view($this->alias . '.form', compact('model'));
+    }
 
-	protected function currentUserCanViewModel($model)
-	{
-		return $model->exists && $this->getCurrentUser()->can('view', $model);
-	}
+    public function save($id = null)
+    {
+        $model = $this->initModel($id);
+        if (!($this->currentUserCanCreateModel($model) || $this->currentUserCanUpdateModel($model))) {
+            return view($this->alias . '.form', compact('model'));
+        }
 
-	protected function currentUserCanUpdateModel($model)
-	{
-		return $model->exists && $this->getCurrentUser()->can('update', $model);
-	}
+        $request = $this->getFormRequest();
+        $formData = $request->validated();
 
-	protected function currentUserCanDeleteModel($model)
-	{
-		return !$model->exists && $this->getCurrentUser()->can('delete', $model);
-	}
+        foreach ($formData as $attributeName => $value) {
+            $model->{$attributeName} = $value;
+        }
 
-	public function list()
-	{
-		$modelClassName = $this->getModelClass();
-		if ($this->currentUserCanListModels($modelClassName)) {
-			return view($this->alias . '.list', compact('modelClassName'));
-		}
-		return view('errors.permission-denied');
-	}
-
-	public function form($id = null)
-	{
-		$model = $this->initModel($id);
-		if ($model->exists && $this->currentUserCanUpdateModel($model)) {
-			return view($this->alias . '.form', compact('model'));
-		}
-		if (!$model->exists && $this->currentUserCanCreateModel($model)) {
-			return view($this->alias . '.form', compact('model'));
-		}
-		return view('errors.permission-denied');
-	}
-
-	public function save($id = null)
-	{
-		$model = $this->initModel($id);
-		if (!($this->currentUserCanCreateModel($model) || $this->currentUserCanUpdateModel($model))) {
-			return view($this->alias . '.form', compact('model'));
-		}
-
-		$request = $this->getFormRequest();
-		$formData = $request->validated();
-
-		foreach ($formData as $attributeName => $value) {
-			$model->{$attributeName} = $value;
-		}
-
-		$model->save();
-		$this->afterSaveModel($model, $model->exists, $request);
-		return redirect()->route($this->alias . '.edit', $model->id);
-	}
+        $model->save();
+        $this->afterSaveModel($model, $model->exists, $request);
+        return redirect()->route($this->alias . '.edit', $model->id);
+    }
 
 
-	public function delete($id)
-	{
-		$model = $this->initModel($id);
-		if (!$this->currentUserCanDeleteModel($model)) {
-			$model->delete();
-		}
-		return redirect()->route($this->alias . '.list');
-	}
+    public function delete($id)
+    {
+        $model = $this->initModel($id);
+        if (!$this->currentUserCanDeleteModel($model)) {
+            $model->delete();
+        }
+        return redirect()->route($this->alias . '.list');
+    }
 
-	public function show($id)
-	{
-		$model = $this->initModel($id);
-		if (!$model->exists && $this->currentUserCanViewModel($model)) {
-			return view($this->alias . '.form', compact('model'));
-		}
-		return view('errors.permission-denied');
-	}
+    public function show($id)
+    {
+        $model = $this->initModel($id);
+        if (!$model->exists && $this->currentUserCanViewModel($model)) {
+            return view($this->alias . '.form', compact('model'));
+        }
+        return view('errors.permission-denied');
+    }
 }
