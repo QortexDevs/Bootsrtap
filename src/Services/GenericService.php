@@ -30,6 +30,16 @@ abstract class GenericService
         return $this->modelClassName::whereIn($name, $values)->get();
     }
 
+    public function getModelClassName()
+    {
+        return $this->modelClassName;
+    }
+
+    public function getModelInstance()
+    {
+        return new $this->modelClassName;
+    }
+
     public function getAll()
     {
         return $this->modelClassName::all();
