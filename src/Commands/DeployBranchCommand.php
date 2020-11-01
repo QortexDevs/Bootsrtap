@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 
 class DeployBranchCommand extends Command
 {
-    protected $signature = 'deploy {--renew}';
+    protected $signature = 'deploy {--full}';
     protected $description = 'Деплоит текущую ветку как отдельный поддомен';
 
     private function getCurrentBranchName()
@@ -75,7 +75,9 @@ class DeployBranchCommand extends Command
             'composer install',
             'npm install',
             'npm run dev',
-            'sed \"s/{{ applicationHost }}/{{branchName}}.{{domain}}/\" ' . $stubFile . ' > ' . $envFile,
+            'cp ' . $stubFile . ' ' . $envFile,
+            'sed -i \"s/{{ applicationHost }}/{{branchName}}.{{domain}}/\" ' . $envFile,
+            'sed -i \"s/{{ branchName }}/{{branchName}}/\" ' . $envFile,
             'php artisan migrate',
         ];
         $arguments = array_map(function ($item) use ($repositoryName, $branchName, $userName, $domain) {
@@ -130,9 +132,47 @@ class DeployBranchCommand extends Command
         exec($command, $output, $status);
     }
 
+    private function restoreDatabase($branchName, $userName, $domain)
+    {
+        $mysqlRootUser = env('MYSQL_ROOT_USER');
+        $mysqlRootPassword = env('MYSQL_ROOT_PASSWORD');
+        $commands = [
+            'cd ~/branches/{{branchName}}.{{domain}}/www',
+            'mysql -u{{mysqlRootUser}} -p{{mysqlRootPassword}} -e \"CREATE USER IF NOT EXISTS \'{{branchName}}\'@\'localhost\' IDENTIFIED BY \'stage_password\';\"',
+            'mysql -u{{mysqlRootUser}} -p{{mysqlRootPassword}} -e \"CREATE DATABASE IF NOT EXISTS {{branchName}};\"',
+            'aws s3 cp s3://delo-backup/db-backup/mysql-full/latest.sql ./{{branchName}}.sql',
+            'mysql -u{{branchName}} -pstage_password --database={{branchName}} < ./{{branchName}}.sql',
+            'rm ./{{branchName}}.sql',
+            'npm run dev',
+            'php artisan migrate',
+        ];
+        $arguments = array_map(function ($item) use ($mysqlRootUser, $mysqlRootPassword, $branchName, $userName, $domain) {
+            return str_replace(
+                [
+                    '{{mysqlRootUser}}',
+                    '{{mysqlRootPassword}}',
+                    '{{branchName}}',
+                    '{{userName}}',
+                    '{{domain}}'
+                ],
+                [
+                    $mysqlRootUser,
+                    $mysqlRootPassword,
+                    $branchName,
+                    $userName,
+                    $domain,
+                ],
+                $item
+            );
+        }, $commands);
+
+        $command = 'ssh -o StrictHostKeyChecking=no ' . $userName . '@' . $branchName . '.' . $domain . ' "' . implode(' && ', $arguments) . '"';
+        exec($command, $output, $status);
+    }
+
     public function handle()
     {
-        $renew = $this->option('renew');
+        $full = $this->option('full');
 
         $deployDomain = env('DEPLOY_DOMAIN');
         $deployUser = env('DEPLOY_USER');
@@ -149,10 +189,12 @@ class DeployBranchCommand extends Command
             $this->commit($message);
             $this->pushBranchToRemote($currentBranchName);
         }
-        if ($renew) {
-            $this->pullBranchOnStagingServer($deployRepository, $currentBranchName, $deployUser, $deployDomain);
-        } else {
+        if ($full) {
             $this->cloneRepositoryOnStagingServer($deployRepository, $currentBranchName, $deployUser, $deployDomain);
+            $this->line('Загружаю последнюю версию базы данных для «' . $currentBranchName . '»');
+            $this->restoreDatabase($currentBranchName, $deployUser, $deployDomain);
+        } else {
+            $this->pullBranchOnStagingServer($deployRepository, $currentBranchName, $deployUser, $deployDomain);
         }
         $this->line('Всё готово!');
         $this->line('Ветка доступна по адресу: https://' . $currentBranchName . '.' . $deployDomain);
