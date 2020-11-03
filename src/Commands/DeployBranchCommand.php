@@ -138,8 +138,10 @@ class DeployBranchCommand extends Command
         $mysqlRootPassword = env('MYSQL_ROOT_PASSWORD');
         $commands = [
             'cd ~/branches/{{branchName}}.{{domain}}/www',
+            'mysql -u{{mysqlRootUser}} -p{{mysqlRootPassword}} -e \"DROP DATABASE IF EXISTS \\\\\`{{branchName}}\\\\\`;\"',
             'mysql -u{{mysqlRootUser}} -p{{mysqlRootPassword}} -e \"CREATE USER IF NOT EXISTS \'{{branchName}}\'@\'localhost\' IDENTIFIED BY \'stage_password\';\"',
-            'mysql -u{{mysqlRootUser}} -p{{mysqlRootPassword}} -e \"CREATE DATABASE IF NOT EXISTS {{branchName}};\"',
+            'mysql -u{{mysqlRootUser}} -p{{mysqlRootPassword}} -e \"CREATE DATABASE IF NOT EXISTS \\\\\`{{branchName}}\\\\\`;\"',
+            'mysql -u{{mysqlRootUser}} -p{{mysqlRootPassword}} -e \"GRANT ALL ON \\\\\`{{branchName}}\\\\\`.* TO \'{{branchName}}\'@\'localhost\';\"',
             'aws s3 cp s3://delo-backup/db-backup/mysql-full/latest.sql ./{{branchName}}.sql',
             'mysql -u{{branchName}} -pstage_password --database={{branchName}} < ./{{branchName}}.sql',
             'rm ./{{branchName}}.sql',
@@ -165,8 +167,9 @@ class DeployBranchCommand extends Command
                 $item
             );
         }, $commands);
-
-        $command = 'ssh -o StrictHostKeyChecking=no ' . $userName . '@' . $branchName . '.' . $domain . ' "' . implode(' && ', $arguments) . '"';
+        #print(implode(' && ', $arguments));
+        #exit;
+        $command = 'ssh -o StrictHostKeyChecking=no ' . $userName . '@' . $branchName . '.' . $domain . ' "' . (implode(' && ', $arguments)) . '"';
         exec($command, $output, $status);
     }
 
