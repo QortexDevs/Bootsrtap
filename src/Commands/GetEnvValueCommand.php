@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 
-class GetEnvValue extends Command
+class GetEnvValueCommand extends Command
 {
     protected $signature = 'get:env-value {envName}';
     protected $description = 'Получает значение перменной окружения текущего проекта';

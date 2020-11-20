@@ -15,6 +15,7 @@ class BootstrapServiceProvider extends ServiceProvider
                 \Qortex\Bootstrap\Commands\ServiceMakeCommand::class,
                 \Qortex\Bootstrap\Commands\ModelMakeCommand::class,
                 \Qortex\Bootstrap\Commands\DeployBranchCommand::class,
+                \Qortex\Bootstrap\Commands\GetEnvValueCommand::class,
             ]);
         }
     }
