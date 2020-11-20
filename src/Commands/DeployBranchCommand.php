@@ -2,16 +2,15 @@
 
 namespace Qortex\Bootstrap\Commands;
 
-use Illuminate\Console\Command;
-
-class DeployBranchCommand extends Command
+class DeployBranchCommand extends GenericShellExecuteCommand
 {
+    use Traits\ManagesRemotePorts;
+
     protected $signature = 'deploy {--full}';
     protected $description = 'Деплоит текущую ветку как отдельный поддомен';
 
     private function getCurrentBranchName()
     {
-        //exec('git branch --show-current', $output, $status);
         exec('git rev-parse --abbrev-ref HEAD', $output, $status);
         if ($status === 0) {
             if (count($output) > 0) {
@@ -60,84 +59,89 @@ class DeployBranchCommand extends Command
         return null;
     }
 
-    private function cloneRepositoryOnStagingServer($repositoryName, $branchName, $userName, $domain)
+    private function stopFrontend(string $hostName, string $userName, array $arguments)
     {
-        $stubFile = '.env.deploy-per-branch.stub';
-        $envFile = '.env';
+        $currentCommentsPort = $this->getRemoveEnvValue($hostName, $userName, 'NODE_SERVER_COMMENTS_PORT');
+        $currentCollaborateEditorPort = $this->getRemoveEnvValue($hostName, $userName, 'NODE_SERVER_COLLABORATE_EDITOR_PORT');
+        if ($currentCommentsPort) {
+            $this->stopServerByPort($hostName, $userName, $currentCommentsPort);
+        }
+        if ($currentCollaborateEditorPort) {
+            $this->stopServerByPort($hostName, $userName, $currentCollaborateEditorPort);
+        }
+    }
+
+    private function clearExistingBranchFiles(string $hostName, string $userName, array $arguments)
+    {
         $commands = [
             'cd ~/branches/',
-            'rm -fR {{branchName}}.{{domain}}',
-            'mkdir {{branchName}}.{{domain}}',
-            'cd {{branchName}}.{{domain}}',
-            'rm -fR www',
+            'rm -fR {{hostName}}',
+        ];
+        $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
+    }
+
+    private function clearExistingBranch(string $hostName, string $userName, array $arguments)
+    {
+        $this->stopFrontend($hostName, $userName, $arguments);
+        $this->clearExistingBranchFiles($hostName, $userName, $arguments);
+    }
+
+    private function cloneBranchOnStagingServer(string $hostName, string $userName, array $arguments)
+    {
+        $commands = [
+            'cd ~/branches/{{hostName}}/',
             'git clone -b {{branchName}} --single-branch {{repositoryName}} www',
-            'cd www',
+        ];
+        $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
+    }
+
+    private function prepareEnvFile($hostName, $userName, $arguments)
+    {
+        $commands = [
+            'cd ~/branches/{{hostName}}/www',
+            'cp {{stubFile}} {{envFile}}',
+            'sed -i \"s/{{ APPLICATION_HOST }}/{{hostName}}/\" {{envFile}}',
+            'sed -i \"s/{{ DB_DATABASE }}/{{branchName}}/\" {{envFile}}',
+            'sed -i \"s/{{ DB_USERNAME }}/{{branchName}}/\" {{envFile}}',
+            'sed -i \"s/{{ NODE_SERVER_COMMENTS_HOST }}/{{commentsPort}}/\" {{envFile}}',
+            'sed -i \"s/{{ NODE_SERVER_COLLABORATE_EDITOR_PORT }}/{{collaborateEditorPort}}/\" {{envFile}}',
+        ];
+        $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
+    }
+
+    private function prepareBackend(string $hostName, string $userName, array $arguments)
+    {
+        $commands = [
+            'cd ~/branches/{{hostName}}/www',
             'composer install',
+            'php artisan migrate',
+        ];
+        $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
+    }
+
+    private function prepareFrontend(string $hostName, string $userName, array $arguments)
+    {
+        $commands = [
+            'cd ~/branches/{{hostName}}/www',
             'npm install',
             'npm run dev',
-            'cp ' . $stubFile . ' ' . $envFile,
-            'sed -i \"s/{{ applicationHost }}/{{branchName}}.{{domain}}/\" ' . $envFile,
-            'sed -i \"s/{{ branchName }}/{{branchName}}/\" ' . $envFile,
-            'php artisan migrate',
         ];
-        $arguments = array_map(function ($item) use ($repositoryName, $branchName, $userName, $domain) {
-            return str_replace(
-                [
-                    '{{repositoryName}}',
-                    '{{branchName}}',
-                    '{{userName}}',
-                    '{{domain}}'
-                ],
-                [
-                    $repositoryName,
-                    $branchName,
-                    $userName,
-                    $domain
-                ],
-                $item
-            );
-        }, $commands);
-
-        $command = 'ssh -o StrictHostKeyChecking=no ' . $userName . '@' . $branchName . '.' . $domain . ' "' . implode(' && ', $arguments) . '"';
-        exec($command, $output, $status);
+        $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
     }
 
-    private function pullBranchOnStagingServer($repositoryName, $branchName, $userName, $domain)
+    private function pullBranchOnStagingServer(string $hostName, string $userName, array $arguments)
     {
         $commands = [
-            'cd ~/branches/{{branchName}}.{{domain}}/www',
+            'cd ~/branches/{{hostName}}/www',
             'git pull',
-            'npm run dev',
-            'php artisan migrate',
         ];
-        $arguments = array_map(function ($item) use ($repositoryName, $branchName, $userName, $domain) {
-            return str_replace(
-                [
-                    '{{repositoryName}}',
-                    '{{branchName}}',
-                    '{{userName}}',
-                    '{{domain}}'
-                ],
-                [
-                    $repositoryName,
-                    $branchName,
-                    $userName,
-                    $domain
-                ],
-                $item
-            );
-        }, $commands);
-
-        $command = 'ssh -o StrictHostKeyChecking=no ' . $userName . '@' . $branchName . '.' . $domain . ' "' . implode(' && ', $arguments) . '"';
-        exec($command, $output, $status);
+        $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
     }
 
-    private function restoreDatabase($branchName, $userName, $domain)
+    private function restoreDatabase(string $hostName, string $userName, array $arguments)
     {
-        $mysqlRootUser = env('MYSQL_ROOT_USER');
-        $mysqlRootPassword = env('MYSQL_ROOT_PASSWORD');
         $commands = [
-            'cd ~/branches/{{branchName}}.{{domain}}/www',
+            'cd ~/branches/{{hostName}}/www',
             'mysql -u{{mysqlRootUser}} -p{{mysqlRootPassword}} -e \"DROP DATABASE IF EXISTS \\\\\`{{branchName}}\\\\\`;\"',
             'mysql -u{{mysqlRootUser}} -p{{mysqlRootPassword}} -e \"CREATE USER IF NOT EXISTS \'{{branchName}}\'@\'localhost\' IDENTIFIED BY \'stage_password\';\"',
             'mysql -u{{mysqlRootUser}} -p{{mysqlRootPassword}} -e \"CREATE DATABASE IF NOT EXISTS \\\\\`{{branchName}}\\\\\`;\"',
@@ -145,32 +149,8 @@ class DeployBranchCommand extends Command
             'aws s3 cp s3://delo-backup/db-backup/mysql-full/latest.sql ./{{branchName}}.sql',
             'mysql -u{{branchName}} -pstage_password --database={{branchName}} < ./{{branchName}}.sql',
             'rm ./{{branchName}}.sql',
-            'npm run dev',
-            'php artisan migrate',
         ];
-        $arguments = array_map(function ($item) use ($mysqlRootUser, $mysqlRootPassword, $branchName, $userName, $domain) {
-            return str_replace(
-                [
-                    '{{mysqlRootUser}}',
-                    '{{mysqlRootPassword}}',
-                    '{{branchName}}',
-                    '{{userName}}',
-                    '{{domain}}'
-                ],
-                [
-                    $mysqlRootUser,
-                    $mysqlRootPassword,
-                    $branchName,
-                    $userName,
-                    $domain,
-                ],
-                $item
-            );
-        }, $commands);
-        #print(implode(' && ', $arguments));
-        #exit;
-        $command = 'ssh -o StrictHostKeyChecking=no ' . $userName . '@' . $branchName . '.' . $domain . ' "' . (implode(' && ', $arguments)) . '"';
-        exec($command, $output, $status);
+        $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
     }
 
     public function handle()
@@ -180,9 +160,14 @@ class DeployBranchCommand extends Command
         $deployDomain = env('DEPLOY_DOMAIN');
         $deployUser = env('DEPLOY_USER');
         $deployRepository = env('DEPLOY_REPOSITORY');
+        $mysqlRootUser = env('MYSQL_ROOT_USER');
+        $mysqlRootPassword = env('MYSQL_ROOT_PASSWORD');
 
-        $currentBranchName = $this->getCurrentBranchName();
-        $this->line('Начинаю деплой ветки «' . $currentBranchName . '»');
+        $branchName = $this->getCurrentBranchName();
+        $branchHostName = $deployDomain . '.' . $branchName;
+
+
+        $this->line('Начинаю деплой ветки «' . $branchName . '»');
         $workingDirectoryClean = $this->isWorkingDirectoryIsClean();
         if (!$workingDirectoryClean) {
             $message = '';
@@ -190,16 +175,34 @@ class DeployBranchCommand extends Command
                 $message = $this->ask('Перед деплоем нужно закоммитить изменения. Введите сообщение для коммита или нажмите Ctrl+C, чтобы прервать операцию. Сообщение для коммита');
             }
             $this->commit($message);
-            $this->pushBranchToRemote($currentBranchName);
+            $this->pushBranchToRemote($branchName);
         }
         if ($full) {
-            $this->cloneRepositoryOnStagingServer($deployRepository, $currentBranchName, $deployUser, $deployDomain);
-            $this->line('Загружаю последнюю версию базы данных для «' . $currentBranchName . '»');
-            $this->restoreDatabase($currentBranchName, $deployUser, $deployDomain);
+            $this->clearExistingBranch($branchHostName, $deployUser, []);
+            $this->cloneBranchOnStagingServer($branchHostName, $deployUser, [
+                'repositoryName' => $deployRepository,
+                'branchName' => $branchName,
+                'commentsPort' => $this->getRandomFreePortInRange($branchHostName, $deployUser, 3000, 3999),
+                'collaborateEditorPort' => $this->getRandomFreePortInRange($branchHostName, $deployUser, 3000, 3999),
+
+            ]);
+            $this->line('Загружаю последнюю версию базы данных для «' . $branchName . '»');
+            $this->restoreDatabase($branchHostName, $deployUser, [
+                'mysqlRootUser' => $mysqlRootUser,
+                'mysqlRootPassword' => $mysqlRootPassword,
+                'branchName' => $branchName,
+            ]);
         } else {
-            $this->pullBranchOnStagingServer($deployRepository, $currentBranchName, $deployUser, $deployDomain);
+            $this->pullBranchOnStagingServer($deployRepository, $branchName, $deployUser, $deployDomain);
         }
+        $this->prepareEnvFile($branchHostName, $deployUser, [
+            'stubEnvFile' => '.env.deploy-per-branch.stub',
+            'envFile' => '.env',
+        ]);
+        $this->prepareBackend($branchHostName, $deployUser, [
+
+        ]);
         $this->line('Всё готово!');
-        $this->line('Ветка доступна по адресу: https://' . $currentBranchName . '.' . $deployDomain);
+        $this->line('Ветка доступна по адресу: https://' . $branchName . '.' . $deployDomain);
     }
 }

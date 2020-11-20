@@ -4,7 +4,7 @@ namespace Qortex\Bootstrap\Commands;
 
 use Illuminate\Console\Command;
 
-class GenericCommand extends Command
+abstract class GenericCommand extends Command
 {
     private function emptyLine()
     {
