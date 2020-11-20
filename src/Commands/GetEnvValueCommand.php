@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace Qortex\Bootstrap\Commands;
 
 use Illuminate\Console\Command;
 
