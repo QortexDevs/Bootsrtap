@@ -32,7 +32,6 @@ abstract class GenericShellExecuteCommand extends GenericCommand
             }
             return str_replace($variables, $replacements, $item);
         }, $commands);
-
         $command = 'ssh -o StrictHostKeyChecking=no ' . $userName . '@' . $hostName . ' "' . implode(' && ', $arguments) . '"';
         exec($command, $output, $status);
         return $output;

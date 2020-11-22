@@ -30,7 +30,7 @@ class DeployBranchCommand extends GenericShellExecuteCommand
         }
     }
 
-    private function isWorkingDirectoryIsClean()
+    private function isWorkingDirectoryClean()
     {
         exec('git status --porcelain', $output, $status);
         if ($status === 0) {
@@ -69,6 +69,16 @@ class DeployBranchCommand extends GenericShellExecuteCommand
         if ($currentCollaborateEditorPort) {
             $this->stopServerByPort($hostName, $userName, $currentCollaborateEditorPort);
         }
+        $commands = [
+            'cd ~/branches/{{hostName}}/www',
+            './node_modules/pm2/bin/pm2 -f stop node-server-comments.js',
+        ];
+        $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
+        $commands = [
+            'cd ~/branches/{{hostName}}/www',
+            './node_modules/pm2/bin/pm2 -f start node-server.js',
+        ];
+        $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
     }
 
     private function clearExistingBranchFiles(string $hostName, string $userName, array $arguments)
@@ -82,7 +92,6 @@ class DeployBranchCommand extends GenericShellExecuteCommand
 
     private function clearExistingBranch(string $hostName, string $userName, array $arguments)
     {
-        $this->stopFrontend($hostName, $userName, $arguments);
         $this->clearExistingBranchFiles($hostName, $userName, $arguments);
     }
 
@@ -99,11 +108,13 @@ class DeployBranchCommand extends GenericShellExecuteCommand
     {
         $commands = [
             'cd ~/branches/{{hostName}}/www',
-            'cp {{stubFile}} {{envFile}}',
+            'cp {{stubEnvFile}} {{envFile}}',
             'sed -i \"s/{{ APPLICATION_HOST }}/{{hostName}}/\" {{envFile}}',
             'sed -i \"s/{{ DB_DATABASE }}/{{branchName}}/\" {{envFile}}',
             'sed -i \"s/{{ DB_USERNAME }}/{{branchName}}/\" {{envFile}}',
-            'sed -i \"s/{{ NODE_SERVER_COMMENTS_HOST }}/{{commentsPort}}/\" {{envFile}}',
+            'sed -i \"s/{{ NODE_SERVER_COMMENTS_HOST }}/{{hostName}}/\" {{envFile}}',
+            'sed -i \"s/{{ NODE_SERVER_COMMENTS_PORT }}/{{commentsPort}}/\" {{envFile}}',
+            'sed -i \"s/{{ NODE_SERVER_COLLABORATE_EDITOR_HOST }}/{{hostName}}/\" {{envFile}}',
             'sed -i \"s/{{ NODE_SERVER_COLLABORATE_EDITOR_PORT }}/{{collaborateEditorPort}}/\" {{envFile}}',
         ];
         $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
@@ -113,6 +124,7 @@ class DeployBranchCommand extends GenericShellExecuteCommand
     {
         $commands = [
             'cd ~/branches/{{hostName}}/www',
+            'rm composer.lock',
             'composer install',
             'php artisan migrate',
         ];
@@ -153,6 +165,30 @@ class DeployBranchCommand extends GenericShellExecuteCommand
         $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
     }
 
+    private function startCommentsService(string $hostName, string $userName, array $arguments)
+    {
+        $commands = [
+            'cd ~/branches/{{hostName}}/www',
+            './node_modules/pm2/bin/pm2 -f start node-server-comments.js',
+        ];
+        $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
+    }
+
+    private function startCollaborateEditorService(string $hostName, string $userName, array $arguments)
+    {
+        $commands = [
+            'cd ~/branches/{{hostName}}/www',
+            './node_modules/pm2/bin/pm2 -f start node-server.js',
+        ];
+        $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
+    }
+
+    private function startFrontend(string $hostName, string $userName, array $arguments)
+    {
+        $this->startCommentsService($hostName, $userName, $arguments);
+        $this->startCollaborateEditorService($hostName, $userName, $arguments);
+    }
+
     public function handle()
     {
         $full = $this->option('full');
@@ -164,11 +200,10 @@ class DeployBranchCommand extends GenericShellExecuteCommand
         $mysqlRootPassword = env('MYSQL_ROOT_PASSWORD');
 
         $branchName = $this->getCurrentBranchName();
-        $branchHostName = $deployDomain . '.' . $branchName;
-
+        $branchHostName =  $branchName . '.' . $deployDomain;
 
         $this->line('Начинаю деплой ветки «' . $branchName . '»');
-        $workingDirectoryClean = $this->isWorkingDirectoryIsClean();
+        $workingDirectoryClean = $this->isWorkingDirectoryClean();
         if (!$workingDirectoryClean) {
             $message = '';
             while ($message == '') {
@@ -177,31 +212,41 @@ class DeployBranchCommand extends GenericShellExecuteCommand
             $this->commit($message);
             $this->pushBranchToRemote($branchName);
         }
+        $this->line('Останавливаю фронтенд-серверы...');
+        $this->stopFrontend($branchHostName, $deployUser, []);
         if ($full) {
+            $this->line('Очищаю текущую папку с кодом...');
             $this->clearExistingBranch($branchHostName, $deployUser, []);
+            $this->line('Клонирую master из репозитория проекта...');
             $this->cloneBranchOnStagingServer($branchHostName, $deployUser, [
                 'repositoryName' => $deployRepository,
                 'branchName' => $branchName,
-                'commentsPort' => $this->getRandomFreePortInRange($branchHostName, $deployUser, 3000, 3999),
-                'collaborateEditorPort' => $this->getRandomFreePortInRange($branchHostName, $deployUser, 3000, 3999),
-
             ]);
-            $this->line('Загружаю последнюю версию базы данных для «' . $branchName . '»');
+            $this->line('Загружаю последнюю версию базы данных...');
             $this->restoreDatabase($branchHostName, $deployUser, [
                 'mysqlRootUser' => $mysqlRootUser,
                 'mysqlRootPassword' => $mysqlRootPassword,
                 'branchName' => $branchName,
             ]);
         } else {
-            $this->pullBranchOnStagingServer($deployRepository, $branchName, $deployUser, $deployDomain);
+            $this->line('Актуализирую код из репозитория...');
+            $this->pullBranchOnStagingServer($branchHostName, $deployUser, []);
         }
+        $this->line('Создаю .env-файл проекта...');
         $this->prepareEnvFile($branchHostName, $deployUser, [
             'stubEnvFile' => '.env.deploy-per-branch.stub',
             'envFile' => '.env',
-        ]);
-        $this->prepareBackend($branchHostName, $deployUser, [
+            'branchName' => $branchName,
+            'commentsPort' => $this->getRandomFreePortInRange($branchHostName, $deployUser, 3000, 3499),
+            'collaborateEditorPort' => $this->getRandomFreePortInRange($branchHostName, $deployUser, 3500, 3999),
 
         ]);
+        $this->line('Собираю бекенд...');
+        $this->prepareBackend($branchHostName, $deployUser, []);
+        $this->line('Собираю фронтенд...');
+        $this->prepareFrontend($branchHostName, $deployUser, []);
+        $this->line('Запускаю фронтенд-серверы...');
+        $this->startFrontend($branchHostName, $deployUser, []);
         $this->line('Всё готово!');
         $this->line('Ветка доступна по адресу: https://' . $branchName . '.' . $deployDomain);
     }

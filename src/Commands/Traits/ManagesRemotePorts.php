@@ -49,7 +49,7 @@ trait ManagesRemotePorts
     {
         $killSwitch = $force ? '-9' : '';
         $commands = [
-            'kill {{killSwitch}} $(sudo lsof -t -i:{{port}})',
+            'kill {{killSwitch}} \$(lsof -t -i:{{port}})',
         ];
         $this->executeRemoteCommands($hostName, $userName, $commands, '', [
             'port' => $port,
