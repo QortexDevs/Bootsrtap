@@ -1,0 +1,8 @@
+#!/bin/bash
+VERSION=$1
+COMMIT_MESSAGE=$2
+git add .
+git commit -a -m '$COMMIT_MESSAGE'
+git push
+git tag '$VERSION'
+git push --tags
