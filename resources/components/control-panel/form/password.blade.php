@@ -1,5 +1,5 @@
-<div class="form-group">
-	{{ Form::label($name, ($required ? '<span class="required">*</span> ' : '') . $label, ['class' => 'form-label col-md-4'], false) }}
+<div class="form-group row">
+	{{ Form::label($name, ($required ? '<span class="required">*</span> ' : '') . $label, ['class' => 'col-form-label col-md-4'], false) }}
 	<div class="col-md-8 input-group pl-10 pr-10">
 		<div class="input-group">
 			{{ Form::text($name, $value, $attributes) }}

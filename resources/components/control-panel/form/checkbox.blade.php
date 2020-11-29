@@ -1,4 +1,4 @@
-<div class="form-check">
+<div class="form-check row">
     <label for="{{ $name }}" class="form-check-label">
         {{ Form::checkbox($name, 1, (bool)$checked, $attributes) }}
         {{ $label }}
