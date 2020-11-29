@@ -290,5 +290,20 @@ class FormServiceProvider extends ServiceProvider
             $attributes = $self->mergeAttributes($defaultAttributes, $attributes);
             return Form::checkboxFormControl($name, $label, $checked, $required, $attributes);
         });
+
+        Form::component('pugEditorFormControl', 'qortex::components.control-panel.form.pug-editor', [
+            'name',
+            'label',
+            'checked' => false,
+            'required' => false,
+            'attributes' => []
+        ]);
+        Form::macro('cpPugEditor', function ($name, $label, $checked = false, $required = false, $attributes = []) use ($self) {
+            $defaultAttributes = [
+                'class' => implode(' ', ['form-check-input-styled'])
+            ];
+            $attributes = $self->mergeAttributes($defaultAttributes, $attributes);
+            return Form::checkboxFormControl($name, $label, $checked, $required, $attributes);
+        });
     }
 }
