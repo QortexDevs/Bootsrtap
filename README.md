@@ -1,10 +1,7 @@
 # Bootstraps a Laravel application
 
 ## Installs
-[Download the repository code](https://github.com/ilyabirman/Likely/archive/master.zip) and move `release/likely.js` and
-`release/likely.css` to the desired directory (or `likely.min.js` & `likely.min.css` if you prefer them optimized).
-
-use [https://getcomposer.org/](Composer):
+Use [Composer](https://getcomposer.org/):
 
 ```sh
 $ composer require qortex/bootstrap
