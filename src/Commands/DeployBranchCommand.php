@@ -142,7 +142,7 @@ class DeployBranchCommand extends GenericShellExecuteCommand
     {
         $commands = [
             'cd ~/branches/{{hostName}}/www',
-            'rm composer.lock',
+            'rm -f composer.lock',
             'composer install',
             'php artisan migrate',
         ];
