@@ -9,6 +9,23 @@ class DeployBranchCommand extends GenericShellExecuteCommand
     protected $signature = 'deploy {--full}';
     protected $description = 'Деплоит текущую ветку как отдельный поддомен';
 
+    private function branchDirectoryExists(string $hostName, string $userName, array $arguments = [])
+    {
+        $commands = [
+            '[ -d ~/branches/{{hostName}}/ ] && echo 1 || echo 0',
+        ];
+        $output = $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
+        return count($output) > 0 ? $output[0] : 0;
+    }
+
+    private function createBranchDirectory(string $hostName, string $userName, array $arguments = [])
+    {
+        $commands = [
+            '[ -d ~/branches/{{hostName}}/ ] && mkdir ~/branches/{{hostName}}/',
+        ];
+        $output = $this->executeRemoteCommands($hostName, $userName, $commands, null, $arguments);
+    }
+
     private function getCurrentBranchName()
     {
         exec('git rev-parse --abbrev-ref HEAD', $output, $status);
@@ -98,6 +115,7 @@ class DeployBranchCommand extends GenericShellExecuteCommand
     private function cloneBranchOnStagingServer(string $hostName, string $userName, array $arguments)
     {
         $commands = [
+            'mkdir -p  ~/branches/{{hostName}}/',
             'cd ~/branches/{{hostName}}/',
             'git clone -b {{branchName}} --single-branch {{repositoryName}} www',
         ];
@@ -212,8 +230,13 @@ class DeployBranchCommand extends GenericShellExecuteCommand
             $this->commit($message);
             $this->pushBranchToRemote($branchName);
         }
-        $this->line('Останавливаю фронтенд-серверы...');
-        $this->stopFrontend($branchHostName, $deployUser, []);
+        $branchDirectoryExists = $this->branchDirectoryExists($branchHostName, $deployUser);
+        if (!$branchDirectoryExists) {
+            $this->createBranchDirectory($branchHostName, $deployUser);
+        } else {
+            $this->line('Останавливаю фронтенд-серверы...');
+            $this->stopFrontend($branchHostName, $deployUser, []);
+        }
         if ($full) {
             $this->line('Очищаю текущую папку с кодом...');
             $this->clearExistingBranch($branchHostName, $deployUser, []);
