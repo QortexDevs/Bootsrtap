@@ -1,4 +1,4 @@
-    <?php
+<?php
 
 namespace Qortex\Bootstrap\Providers;
 
@@ -21,9 +21,7 @@ class FormServiceProvider extends ServiceProvider
         return $userAttributes;
     }
 
-    public function register()
-    {
-    }
+    public function register() {}
 
     public function boot()
     {
