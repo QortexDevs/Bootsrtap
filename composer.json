@@ -11,10 +11,10 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "php": "^7.4|^8",
-		"illuminate/support": "^7|^8|^9",
-        "laravelcollective/html": "^5|^6",
-        "yajra/laravel-datatables": "^9.0.0",
+        "php": "^8",
+		"illuminate/support": "^11.31",
+        "spatie/laravel-html": "^3.11",
+        "yajra/laravel-datatables": "^11.0.0",
         "qortex/pug-editor": "^0.0.5"
     },
     "require-dev": {
