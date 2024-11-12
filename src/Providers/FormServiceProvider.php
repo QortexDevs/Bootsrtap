@@ -1,10 +1,10 @@
-<?php
+    <?php
 
 namespace Qortex\Bootstrap\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
-use Form;
+use Spatie\Html\Elements\Form;
 use Carbon\Carbon;
 
 class FormServiceProvider extends ServiceProvider
